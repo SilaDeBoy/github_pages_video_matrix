@@ -1,0 +1,21 @@
+{
+  "Action Movies": [
+    {
+      "name": "Extraction 2 Trailing Clip",
+      "path": "videos/Action/extraction2.mp4",
+      "type": "video"
+    },
+    {
+      "name": "Wrath of Man Promo Concept",
+      "path": "videos/Action/wrath_of_man.mp4",
+      "type": "video"
+    }
+  ],
+  "SciFi Collection": [
+    {
+      "name": "Guardians Volume 3 Showcase Reel",
+      "path": "videos/SciFi/guardians.mp4",
+      "type": "video"
+    }
+  ]
+}

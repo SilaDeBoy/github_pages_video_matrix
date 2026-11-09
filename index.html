@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Cloud Media Matrix</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">🎦 MEDIA.TREE</div>
+    </header>
+
+    <main class="container">
+        <h1 class="main-title">File Tree Library Matrix</h1>
+        <div id="matrixWrapper">
+            <!-- Dynamic Category Content Blocks Injected Here Safely via JavaScript -->
+        </div>
+    </main>
+
+    <!-- Overlay Popup Shell Container -->
+    <div class="video-overlay" id="videoModal">
+        <div class="modal-body">
+            <button class="close-overlay-btn" id="closeModal">&times;</button>
+            <video id="modalVideoPlayer" controls autoplay></video>
+        </div>
+    </div>
+
+    <script>
+        async function initPortal() {
+            const wrapper = document.getElementById('matrixWrapper');
+            try {
+                const response = await fetch('tree.json');
+                if (!response.ok) throw new Error("Could not find configuration catalog mapping database index file.");
+                const mediaTree = await response.json();
+                
+                if (Object.keys(mediaTree).length === 0) {
+                    wrapper.innerHTML = `<div class="empty-state">No media nodes indexed yet. Check your tree.json configuration template data mapping values.</div>`;
+                    return;
+                }
+                
+                renderTreeBlocks(mediaTree, wrapper);
+                attachMediaListeners();
+                
+            } catch (err) {
+                console.error(err);
+                wrapper.innerHTML = `<div class="empty-state">Error initializing file matrix catalog asset mapping registry. Check console logs.</div>`;
+            }
+        }
+
+        function renderTreeBlocks(tree, container) {
+            for (const [key, val] of Object.entries(tree)) {
+                if (Array.isArray(val)) {
+                    const folderSec = document.createElement('div');
+                    folderSec.className = 'folder-section';
+                    folderSec.innerHTML = `
+                        <h3 class="folder-title">📂 \${escapeHTML(key)}</h3>
+                        <div class="grid-display"></div>
+                    `;
+                    
+                    const grid = folderSec.querySelector('.grid-display');
+                    val.forEach(item => {
+                        if (item.type === 'video') {
+                            grid.innerHTML += `
+                                <div class="media-card">
+                                    <div class="media-preview-box">
+                                        <span class="file-icon">🎬</span>
+                                        <div class="hover-video-preview">
+                                            <video src="\${escapeHTML(item.path)}" muted loop preload="none"></video>
+                                        </div>
+                                    </div>
+                                    <div class="media-details">
+                                        <p class="file-name">\${escapeHTML(item.name)}</p>
+                                        <button class="play-trigger-btn" data-video-src="\${escapeHTML(item.path)}">Launch Player</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    container.appendChild(folderSec);
+                } else if (typeof val === 'object') {
+                    const parentContainer = document.createElement('div');
+                    parentContainer.className = 'sub-tree-branch';
+                    renderTreeBlocks(val, parentContainer);
+                    container.appendChild(parentContainer);
+                }
+            }
+        }
+
+        function attachMediaListeners() {
+            document.querySelectorAll('.media-card').forEach(card => {
+                const video = card.querySelector('.hover-video-preview video');
+                if(video) {
+                    card.addEventListener('mouseenter', () => {
+                        video.style.display = 'block';
+                        video.play().catch(() => {});
+                    });
+                    card.addEventListener('mouseleave', () => {
+                        video.pause();
+                        video.currentTime = 0;
+                    });
+                }
+            });
+
+            const modal = document.getElementById('videoModal');
+            const modalPlayer = document.getElementById('modalVideoPlayer');
+            const closeModal = document.getElementById('closeModal');
+
+            document.querySelectorAll('.play-trigger-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modalPlayer.src = btn.getAttribute('data-video-src');
+                    modal.classList.add('active');
+                });
+            });
+
+            const exitModal = () => {
+                modal.classList.remove('active');
+                modalPlayer.pause();
+                modalPlayer.src = "";
+            };
+
+            closeModal.addEventListener('click', exitModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) exitModal(); });
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        document.addEventListener('DOMContentLoaded', initPortal);
+    </script>
+</body>
+</html>
